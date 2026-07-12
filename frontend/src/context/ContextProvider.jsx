@@ -13,44 +13,62 @@ const ContextProvider = ({ children }) => {
     setUser(user);
   };
 
-    const handleLogout = () =>{
-    localStorage.removeItem('token');
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
+
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light";
+
+    setTheme(newTheme);
+
+    localStorage.setItem("theme", newTheme);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
     setUser(null);
 
     toast.success("Logged out successfully 👋");
-  }
+  };
 
   useEffect(() => {
-    const verifyuser = async()=>{
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [theme]);
 
+  useEffect(() => {
+    const verifyuser = async () => {
       const token = localStorage.getItem("token");
 
-
-    if (!token) {
-      setUser(null);
-      return;
-    }
+      if (!token) {
+        setUser(null);
+        return;
+      }
 
       try {
-        const res = await axios.get('http://localhost:5000/api/auth/verify',{
+        const res = await axios.get("http://localhost:5000/api/auth/verify", {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
-          }
-        })
-        if(res.data.success){
-          setUser(res.data.user)
-        } else{
-          setUser(null)
+          },
+        });
+        if (res.data.success) {
+          setUser(res.data.user);
+        } else {
+          setUser(null);
         }
       } catch (error) {
-        console.log(error)
-        setUser(null);///
+        console.log(error);
+        setUser(null); ///
       }
-    }
-    verifyuser()
-  },[])
+    };
+    verifyuser();
+  }, []);
   return (
-    <authContext.Provider value={{ user, login, handleLogout }}>
+    <authContext.Provider
+      value={{ user, login, handleLogout, theme, toggleTheme }}
+    >
       {children}
     </authContext.Provider>
   );

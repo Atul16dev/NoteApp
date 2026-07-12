@@ -3,12 +3,14 @@ import { Link } from "react-router-dom";
 import { Search, Moon, Sun, NotebookPen, User } from "lucide-react";
 import { useAuth } from "../context/ContextProvider";
 
-const Navbar = ({setQuery}) => {
+const Navbar = ({ setQuery }) => {
   const { user, handleLogout } = useAuth();
 
   const [darkMode, setDarkMode] = useState(
     localStorage.getItem("theme") === "dark",
   );
+
+  const { theme, toggleTheme } = useAuth(); ////
 
   useEffect(() => {
     if (darkMode) {
@@ -52,16 +54,15 @@ const Navbar = ({setQuery}) => {
           {/* Dark Mode */}
 
           <button
-            onClick={() => setDarkMode(!darkMode)}
+            onClick={toggleTheme}
             className="p-2 duration-300 bg-gray-200 rounded-full dark:bg-gray-700 hover:scale-110"
           >
-            {darkMode ? (
+            {theme === "dark" ? (
               <Sun className="text-yellow-400" size={20} />
             ) : (
-              <Moon className="text-black-400" size={20} />
+              <Moon className="text-gray-800" size={20} />
             )}
           </button>
-
           {!user ? (
             <>
               <Link
