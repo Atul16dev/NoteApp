@@ -1,64 +1,221 @@
-# Notely
+# 📝 Notely
 
-Notely is a personal note management app for capturing and organizing ideas. It
-uses a React/Vite client and an Express API backed by MongoDB.
+Notely is a full-stack personal note management application for creating, organizing, and managing private notes.
 
-## Features
+It uses a **React/Vite frontend** and a **Node.js/Express REST API** backed by **MongoDB**, with JWT-based authentication for secure user sessions.
 
-- Create an account, sign in, and resume a token-verified session.
-- Create, edit, and delete private notes with a title, description, and category.
-- Search note titles, descriptions, and categories.
-- Filter by category and sort by most recently updated or oldest.
-- Responsive dashboard, keyboard-accessible dialogs, and dark/light themes.
+## ✨ Features
 
-## Tech stack
+* 🔐 User registration and login
+* 🔑 JWT-based authentication
+* 📝 Create, edit, and delete private notes
+* 🏷️ Organize notes using categories
+* 🔍 Search notes by title, description, or category
+* ↕️ Sort notes by recently updated or oldest
+* 🛡️ Protected API routes
+* 🌙 Dark/light theme support
+* 📱 Responsive dashboard
+* ⌨️ Keyboard-accessible dialogs
+* ✅ Confirmation dialog before deleting notes
+* 🔔 User-friendly notifications
 
-- Frontend: React, React Router, Vite, Tailwind CSS, Lucide icons.
-- Backend: Node.js, Express, Mongoose, MongoDB, JWT, and bcrypt.
+## 🛠️ Tech Stack
 
-## Run locally
+### Frontend
 
-1. Start a local MongoDB instance, then create the backend environment file:
+* React
+* React Router
+* Vite
+* Tailwind CSS
+* Axios
+* Lucide Icons
 
-   ```sh
-   cd server
-   cp .env.example .env
-   ```
+### Backend
 
-   Set `MONGO_URI` to `mongodb://localhost:27017/note_app` for local MongoDB.
-   Set `JWT_SECRET` to a random secret; for example, generate one with:
+* Node.js
+* Express.js
+* Mongoose
+* MongoDB
+* JSON Web Token (JWT)
+* bcrypt
 
-   ```sh
-   node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))"
-   ```
+## 📁 Project Structure
 
-   Keep `server/.env` private and out of version control.
+```text
+Notely/
+├── frontend/
+│   ├── public/
+│   └── src/
+│       ├── components/
+│       ├── context/
+│       ├── pages/
+│       └── services/
+│
+├── server/
+│   ├── db/
+│   ├── routes/
+│   ├── middleware.js
+│   └── index.js
+│
+├── .gitignore
+└── README.md
+```
 
-2. In one terminal, install and start the API:
+## 🚀 Run Locally
 
-   ```sh
-   cd server
-   npm install
-   npm start
-   ```
+### 1. Clone the repository
 
-3. In another terminal, install and start the frontend:
+```bash
+git clone https://github.com/Atul16dev/NoteApp.git
+cd NoteApp
+```
 
-   ```sh
-   cd frontend
-   npm install
-   npm run dev
-   ```
+### 2. Configure the backend
 
-The API listens on port `5000`; Vite prints the frontend URL when it starts. The
-frontend uses `http://localhost:5000/api` by default. Set `VITE_API_URL` to a
-different API base URL when needed.
+Create the environment file:
 
-## Checks
+```bash
+cd server
+```
 
-Run the frontend production build and lint checks from `frontend`:
+Copy `.env.example` to `.env`.
 
-```sh
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Then configure your `.env`:
+
+```env
+MONGO_URI=mongodb://localhost:27017/note_app
+JWT_SECRET=your_random_secret
+PORT=5000
+```
+
+> Keep `server/.env` private. Never commit it to GitHub.
+
+For a stronger JWT secret, you can generate one using:
+
+```bash
+node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))"
+```
+
+### 3. Install backend dependencies
+
+```bash
+cd server
+npm install
+```
+
+Start the backend:
+
+```bash
+npm start
+```
+
+The API runs on:
+
+```text
+http://localhost:5000
+```
+
+### 4. Install frontend dependencies
+
+Open another terminal:
+
+```bash
+cd frontend
+npm install
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Vite will display the frontend URL, normally:
+
+```text
+http://localhost:5173
+```
+
+The frontend uses the backend API:
+
+```text
+http://localhost:5000/api
+```
+
+You can configure a different API URL using:
+
+```env
+VITE_API_URL=your_api_url
+```
+
+## 🔐 Environment Variables
+
+### Backend
+
+Create `server/.env`:
+
+```env
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+PORT=5000
+```
+
+### Frontend
+
+If required, create a frontend environment file:
+
+```env
+VITE_API_URL=your_backend_api_url
+```
+
+**Never upload real secrets, database credentials, or JWT secrets to GitHub.**
+
+The repository contains `.env.example` files as configuration templates.
+
+## 🧪 Checks
+
+From the `frontend` directory, run:
+
+```bash
 npm run build
+```
+
+To run lint checks:
+
+```bash
 npm run lint
 ```
+
+Both commands should complete successfully before deployment.
+
+## 🌐 Deployment
+
+The application can be deployed using:
+
+* **Frontend:** Vercel
+* **Backend:** Render
+* **Database:** MongoDB Atlas
+
+Production environment variables must be configured on the hosting platforms.
+
+## 📸 Screenshots
+
+Add screenshots of the main application screens here:
+
+* Login
+* Signup
+* Notes Dashboard
+* Create/Edit Note
+* Dark Mode
+
+## 👨‍💻 Author
+
+**Atul Kumar**
+
+GitHub: https://github.com/Atul16dev
