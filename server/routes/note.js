@@ -8,13 +8,30 @@ router.post("/add", middleware, async (req, res) => {
   try {
     const { title, description, tag } = req.body;
 
+    if (
+      typeof title !== "string" ||
+      title.trim().length < 3 ||
+      title.trim().length > 80 ||
+      typeof description !== "string" ||
+      !description.trim() ||
+      description.trim().length > 2000 ||
+      (tag !== undefined && typeof tag !== "string")
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid title and note.",
+      });
+    }
+
     const newNote = new Note({
-      title,
-      description,
-      tag,
+      title: title.trim(),
+      description: description.trim(),
+      tag:
+        typeof tag === "string" && tag.trim()
+          ? tag.trim().slice(0, 32)
+          : "General",
       user: req.user.id,
     });
-
 
     await newNote.save();
 
@@ -34,9 +51,7 @@ router.post("/add", middleware, async (req, res) => {
 
 router.get("/", middleware, async (req, res) => {
   try {
-    console.log("req.user.id =", req.user.id);//ch
-    const notes = await Note.find({user: req.user.id});
-    console.log("Fetched Notes =", notes);//ch
+    const notes = await Note.find({ user: req.user.id });
     return res.status(200).json({ success: true, notes });
   } catch (error) {
     return res
@@ -45,13 +60,46 @@ router.get("/", middleware, async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", middleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const updateNote = await Note.findByIdAndUpdate(id, req.body, {
-      new: true,
-    });
-    return res.status(200).json({ success: true, note: updateNote });
+    const { title, description, tag } = req.body;
+
+    if (
+      typeof title !== "string" ||
+      title.trim().length < 3 ||
+      title.trim().length > 80 ||
+      typeof description !== "string" ||
+      !description.trim() ||
+      description.trim().length > 2000 ||
+      (tag !== undefined && typeof tag !== "string")
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide a valid title and note.",
+      });
+    }
+
+    const note = await Note.findOneAndUpdate(
+      { _id: id, user: req.user.id },
+      {
+        title: title.trim(),
+        description: description.trim(),
+        tag:
+          typeof tag === "string" && tag.trim()
+            ? tag.trim().slice(0, 32)
+            : "General",
+      },
+      { returnDocument: "after", runValidators: true },
+    );
+
+    if (!note) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Note not found." });
+    }
+
+    return res.status(200).json({ success: true, note });
   } catch (error) {
     return res
       .status(500)
@@ -59,17 +107,22 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", middleware, async (req, res) => {
   try {
     const { id } = req.params;
-    const updateNote = await Note.findByIdAndDelete(id, {
-      new: true,
-    });
-    return res.status(200).json({ success: true, note: updateNote });
+    const note = await Note.findOneAndDelete({ _id: id, user: req.user.id });
+
+    if (!note) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Note not found." });
+    }
+
+    return res.status(200).json({ success: true, note });
   } catch (error) {
     return res
       .status(500)
-      .json({ success: false, message: "Can't update notes" });
+      .json({ success: false, message: "Can't delete note" });
   }
 });
 

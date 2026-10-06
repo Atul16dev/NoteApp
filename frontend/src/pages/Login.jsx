@@ -1,106 +1,92 @@
-import axios from "axios";
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/ContextProvider";
+import { useState } from "react";
+import { ArrowRight, LockKeyhole } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import AuthLayout from "../components/AuthLayout";
+import { useAuth } from "../context/useAuth";
+import api from "../services/api";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSubmitting(true);
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        { email, password },
-      );
-
-      if (response.data.success) {
-        login(response.data.user);
-
-      
-        localStorage.setItem("token", response.data.token);
-        
-
-
-        toast.success("Login Successful 😊");
-
+      const { data } = await api.post("/auth/login", { email, password });
+      if (data.success) {
+        localStorage.setItem("token", data.token);
+        login(data.user);
+        toast.success("Welcome back.");
         navigate("/");
+      } else {
+        toast.error(data.message || "We couldn’t sign you in.");
       }
     } catch (error) {
-      console.log(error.response?.data);
+      toast.error(error.response?.data?.message || "We couldn’t sign you in.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <main className="flex items-center justify-center min-h-screen px-4 bg-gray-100">
-      <section className="w-full max-w-md p-8 bg-white shadow-lg rounded-2xl">
-        <div className="mb-8 text-center">
-          <h2 className="text-3xl font-bold">Login</h2>
-          <p className="mt-2 text-gray-500">Login to your account</p>
+    <AuthLayout
+      title="Welcome back"
+      description="Sign in to pick up where your ideas left off."
+      footer={
+        <>
+          New to Notely?{" "}
+          <Link to="/register" className="inline-link">
+            Create an account
+          </Link>
+        </>
+      }
+    >
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <div className="form-field">
+          <label htmlFor="login-email">Email address</label>
+          <input
+            id="login-email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            autoComplete="email"
+            placeholder="you@example.com"
+            required
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label
-              htmlFor="email"
-              className="block mb-2 text-sm font-medium text-gray-700"
-            >
-              Email
-            </label>
+        <div className="form-field">
+          <label htmlFor="login-password">Password</label>
+          <input
+            id="login-password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="current-password"
+            placeholder="Enter your password"
+            required
+          />
+        </div>
 
-            <input
-              id="email"
-              type="email"
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              placeholder="you@example.com"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block mb-2 text-sm font-medium text-gray-700"
-            >
-              Password
-            </label>
-
-            <input
-              id="password"
-              type="password"
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-              placeholder="Enter Password"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-3 font-medium text-white transition duration-200 bg-blue-600 rounded-lg hover:bg-blue-700"
-          >
-            Login
-          </button>
-
-          <p className="text-sm text-center text-gray-600">
-            Don't have an account?{" "}
-            <Link
-              to="/register"
-              className="font-medium text-blue-600 hover:underline"
-            >
-              Register
-            </Link>
-          </p>
-        </form>
-      </section>
-    </main>
+        <button
+          type="submit"
+          className="button button-primary auth-submit"
+          disabled={submitting}
+        >
+          {submitting ? "Signing in…" : "Sign in"}
+          {!submitting && <ArrowRight size={17} />}
+        </button>
+        <p className="auth-secure-note">
+          <LockKeyhole size={13} />
+          Your notes are private to your account.
+        </p>
+      </form>
+    </AuthLayout>
   );
 };
 

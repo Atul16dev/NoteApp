@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from 'express'
 import cors from 'cors'
 import connectToMongoDb from './db/db.js'
@@ -6,6 +7,12 @@ import connectToMongoDb from './db/db.js'
 
 import authRouter from './routes/auth.js'
 import noteRouter from './routes/note.js'
+
+for (const variable of ["JWT_SECRET", "MONGO_URI"]) {
+    if (!process.env[variable]) {
+        throw new Error(`Missing required environment variable: ${variable}`);
+    }
+}
 
 const app = express()
 app.use(cors())

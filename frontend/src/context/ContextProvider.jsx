@@ -1,78 +1,79 @@
-import axios from "axios";
-import React from "react";
-import { useEffect } from "react";
-import { useState } from "react";
-import { useContext, createContext } from "react";
+import { useEffect, useState } from "react";
+import api from "../services/api";
 import toast from "react-hot-toast";
-
-const authContext = createContext();
+import AuthContext from "./AuthContext";
 
 const ContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const login = (user) => {
-    setUser(user);
+  const [authReady, setAuthReady] = useState(
+    () => !localStorage.getItem("token"),
+  );
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("theme") || "dark",
+  );
+
+  const login = (authenticatedUser) => {
+    setUser(authenticatedUser);
   };
 
-  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
-
   const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-
-    setTheme(newTheme);
-
-    localStorage.setItem("theme", newTheme);
+    setTheme((currentTheme) => {
+      const nextTheme = currentTheme === "dark" ? "light" : "dark";
+      localStorage.setItem("theme", nextTheme);
+      return nextTheme;
+    });
   };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     setUser(null);
-
-    toast.success("Logged out successfully 👋");
+    toast.success("You’re signed out.");
   };
 
   useEffect(() => {
-    if (theme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    document.documentElement.classList.toggle("light-theme", theme === "light");
   }, [theme]);
 
   useEffect(() => {
-    const verifyuser = async () => {
+    let isCurrent = true;
+
+    const verifyUser = async () => {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        setUser(null);
         return;
       }
 
       try {
-        const res = await axios.get("http://localhost:5000/api/auth/verify", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-        if (res.data.success) {
-          setUser(res.data.user);
-        } else {
+        const { data } = await api.get("/auth/verify");
+        if (isCurrent && data.success) {
+          setUser(data.user);
+        }
+      } catch {
+        localStorage.removeItem("token");
+        if (isCurrent) {
           setUser(null);
         }
-      } catch (error) {
-        console.log(error);
-        setUser(null); ///
+      } finally {
+        if (isCurrent) {
+          setAuthReady(true);
+        }
       }
     };
-    verifyuser();
+
+    verifyUser();
+    return () => {
+      isCurrent = false;
+    };
   }, []);
+
   return (
-    <authContext.Provider
-      value={{ user, login, handleLogout, theme, toggleTheme }}
+    <AuthContext.Provider
+      value={{ user, authReady, login, handleLogout, theme, toggleTheme }}
     >
       {children}
-    </authContext.Provider>
+    </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(authContext);
 export default ContextProvider;

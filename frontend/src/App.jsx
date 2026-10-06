@@ -7,13 +7,20 @@ import { Toaster } from "react-hot-toast";
 function App() {
   return (
     <>
-      <Toaster position="top-right" reverseOrder={false} />
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        toastOptions={{
+          className: "app-toast",
+          duration: 3500,
+        }}
+      />
 
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home />}></Route>
-          <Route path="/register" element={<Signup />}></Route>
-          <Route path="/login" element={<Login />}></Route>
+          <Route path="/" element={<Home />} />
+          <Route path="/register" element={<Signup />} />
+          <Route path="/login" element={<Login />} />
         </Routes>
       </BrowserRouter>
     </>

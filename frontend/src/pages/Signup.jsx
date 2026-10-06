@@ -1,117 +1,110 @@
-import axios from "axios";
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { ArrowRight, LockKeyhole } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import AuthLayout from "../components/AuthLayout";
+import api from "../services/api";
 
 const Signup = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSubmitting(true);
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/register",
-        { name, email, password },
-      );
-
-      if (response.data.success) {
-        toast.success("Signup Successful 🎉");
+      const { data } = await api.post("/auth/register", {
+        name: name.trim(),
+        email: email.trim(),
+        password,
+      });
+      if (data.success) {
+        toast.success("Your account is ready. Sign in to continue.");
         navigate("/login");
+      } else {
+        toast.error(data.message || "We couldn’t create your account.");
       }
     } catch (error) {
-      console.log(error.response?.data);
+      toast.error(
+        error.response?.data?.message || "We couldn’t create your account.",
+      );
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <main className="flex items-center justify-center min-h-screen px-4 bg-gray-100">
-      <section className="w-full max-w-md p-8 bg-white shadow-lg rounded-2xl">
-        <div className="mb-8 text-center">
-          <h2 className="text-3xl font-bold">Create Account</h2>
-          <p className="mt-2 text-gray-500">
-            Sign up to start managing your account
-          </p>
+    <AuthLayout
+      title="Create your account"
+      description="A calmer home for your thoughts starts here."
+      footer={
+        <>
+          Already have an account?{" "}
+          <Link to="/login" className="inline-link">
+            Sign in
+          </Link>
+        </>
+      }
+    >
+      <form className="auth-form" onSubmit={handleSubmit}>
+        <div className="form-field">
+          <label htmlFor="signup-name">Your name</label>
+          <input
+            id="signup-name"
+            type="text"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            autoComplete="name"
+            maxLength={60}
+            placeholder="How should we call you?"
+            required
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label
-              htmlFor="name"
-              className="block mb-2 text-sm font-medium text-gray-700"
-            >
-              Name
-            </label>
+        <div className="form-field">
+          <label htmlFor="signup-email">Email address</label>
+          <input
+            id="signup-email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            autoComplete="email"
+            placeholder="you@example.com"
+            required
+          />
+        </div>
 
-            <input
-              id="name"
-              type="text"
-              onChange={(e) => setName(e.target.value)}
-              autoComplete="name"
-              placeholder="Enter Username"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+        <div className="form-field">
+          <label htmlFor="signup-password">Password</label>
+          <input
+            id="signup-password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="new-password"
+            minLength={6}
+            placeholder="At least 6 characters"
+            required
+          />
+        </div>
 
-          <div>
-            <label
-              htmlFor="email"
-              className="block mb-2 text-sm font-medium text-gray-700"
-            >
-              Email
-            </label>
-
-            <input
-              id="email"
-              type="email"
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-              placeholder="you@example.com"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block mb-2 text-sm font-medium text-gray-700"
-            >
-              Password
-            </label>
-
-            <input
-              id="password"
-              type="password"
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-              placeholder="Enter Password"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-3 font-medium text-white transition duration-200 bg-blue-600 rounded-lg hover:bg-blue-700"
-          >
-            Signup
-          </button>
-
-          <p className="text-sm text-center text-gray-600">
-            Already have an account?{" "}
-            <Link
-              to="/login"
-              className="font-medium text-blue-600 hover:underline"
-            >
-              Login
-            </Link>
-          </p>
-        </form>
-      </section>
-    </main>
+        <button
+          type="submit"
+          className="button button-primary auth-submit"
+          disabled={submitting}
+        >
+          {submitting ? "Creating account…" : "Create account"}
+          {!submitting && <ArrowRight size={17} />}
+        </button>
+        <p className="auth-secure-note">
+          <LockKeyhole size={13} />
+          Your notes are private to your account.
+        </p>
+      </form>
+    </AuthLayout>
   );
 };
 

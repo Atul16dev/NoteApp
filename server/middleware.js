@@ -2,43 +2,52 @@ import jwt from "jsonwebtoken";
 import User from "./models/User.js";
 
 const middleware = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  const [scheme, token] = authHeader?.split(" ") || [];
+
+  if (scheme !== "Bearer" || !token) {
+    return res.status(401).json({
+      success: false,
+      message: "Please sign in to continue.",
+    });
+  }
+
+  let decoded;
   try {
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (error) {
+    if (!(error instanceof jwt.JsonWebTokenError)) {
+      console.error("Unable to verify authentication token:", error);
     }
 
-    const token = authHeader.split(" ")[1];
+    return res.status(401).json({
+      success: false,
+      message:
+        error instanceof jwt.TokenExpiredError
+          ? "Your session has expired. Please sign in again."
+          : "Your session is invalid. Please sign in again.",
+    });
+  }
 
-    if (!token) {
-      return res.status(401).json({ success: false, message: "Unauthorized" });
-    }
-
-    const decoded = jwt.verify(token, "secretkeyofnoteapp@123###");
-
-    if (!decoded) {
-      return res.status(401).json({ success: false, message: "Wrong token" });
-    }
-
+  try {
     const user = await User.findById(decoded.id);
 
     if (!user) {
-      return res.status(401).json({ success: false, message: "No User Found" });
+      return res.status(401).json({
+        success: false,
+        message: "Your account could not be found. Please sign in again.",
+      });
     }
-    const newUser = { name: user.name, id: user._id };
-    req.user = newUser;
+
+    req.user = { name: user.name, id: user._id };
     next();
   } catch (error) {
-console.error(error);
-
-  return res.status(401).json({
-    success: false,
-    message: "Please Login",
-  });  }
+    console.error("Unable to verify authenticated user:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to verify your account right now.",
+    });
+  }
 };
 
 export default middleware;

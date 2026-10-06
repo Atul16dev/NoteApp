@@ -1,105 +1,167 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import {
+  BookOpenText,
+  LogOut,
+  Menu,
+  Moon,
+  Search,
+  Sun,
+  UserRound,
+  X,
+} from "lucide-react";
 import { Link } from "react-router-dom";
-import { Search, Moon, Sun, NotebookPen, User } from "lucide-react";
-import { useAuth } from "../context/ContextProvider";
+import { useAuth } from "../context/useAuth";
+
+const SearchInput = ({ inputRef, setQuery }) => (
+  <label className="search-field">
+    <Search size={17} aria-hidden="true" />
+    <input
+      ref={inputRef}
+      type="search"
+      placeholder="Search your notes"
+      aria-label="Search notes"
+      onChange={(event) => setQuery(event.target.value)}
+    />
+    <kbd>Ctrl K</kbd>
+  </label>
+);
 
 const Navbar = ({ setQuery }) => {
-  const { user, handleLogout } = useAuth();
-
-  const [darkMode, setDarkMode] = useState(
-    localStorage.getItem("theme") === "dark",
-  );
-
-  const { theme, toggleTheme } = useAuth(); ////
+  const { user, handleLogout, theme, toggleTheme } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const desktopSearchRef = useRef(null);
+  const mobileSearchRef = useRef(null);
 
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  }, [darkMode]);
+    const focusSearch = (event) => {
+      if (
+        user &&
+        (event.metaKey || event.ctrlKey) &&
+        event.key.toLowerCase() === "k"
+      ) {
+        event.preventDefault();
+        if (window.matchMedia("(max-width: 720px)").matches) {
+          setMenuOpen(true);
+          window.requestAnimationFrame(() => mobileSearchRef.current?.focus());
+        } else {
+          desktopSearchRef.current?.focus();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", focusSearch);
+    return () => window.removeEventListener("keydown", focusSearch);
+  }, [user]);
 
   return (
-    <nav className="sticky top-0 z-50 border-b shadow-md bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg dark:border-gray-700">
-      <div className="flex items-center justify-between h-16 px-6 mx-auto max-w-7xl">
-        {/* Logo */}
-
-        <Link
-          to="/"
-          className="flex items-center gap-2 text-indigo-400 dark:text-indigo-400"
-        >
-          <NotebookPen size={30} />
-          <span className="text-2xl font-bold">NoteApp</span>
+    <header className="topbar">
+      <nav className="topbar-inner" aria-label="Main navigation">
+        <Link to="/" className="brand" aria-label="Notely home">
+          <span className="brand-mark">
+            <BookOpenText size={20} strokeWidth={2.2} />
+          </span>
+          <span>notely</span>
         </Link>
 
-        {/* Search */}
-
-        <div className="items-center hidden px-4 py-2 bg-gray-100 rounded-full md:flex w-96 dark:bg-gray-800">
-          <Search size={18} className="text-gray-500" />
-
-          <input
-            type="text"
-            placeholder="Search notes..."
-            className="w-full ml-2 text-gray-700 placeholder-gray-500 bg-transparent outline-none dark:text-white"
-            onChange={(e) => setQuery(e.target.value)}
-          />
+        <div className="nav-search">
+          {user && (
+            <SearchInput inputRef={desktopSearchRef} setQuery={setQuery} />
+          )}
         </div>
 
-        {/* Right Side */}
+        <div className="nav-actions">
+          <button
+            type="button"
+            className="icon-button theme-toggle"
+            onClick={toggleTheme}
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
+          >
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
 
-        <div className="flex items-center gap-4">
-          {/* Dark Mode */}
+          {user ? (
+            <>
+              <div className="user-chip">
+                <span className="user-avatar">
+                  {(user.name || "N").slice(0, 1).toUpperCase()}
+                </span>
+                <span className="user-name">{user.name}</span>
+              </div>
+              <button
+                type="button"
+                className="button button-quiet nav-logout"
+                onClick={handleLogout}
+              >
+                <LogOut size={16} />
+                <span>Sign out</span>
+              </button>
+            </>
+          ) : (
+            <div className="desktop-auth-links">
+              <Link className="button button-quiet" to="/login">
+                Sign in
+              </Link>
+              <Link className="button button-primary button-small" to="/register">
+                Get started
+              </Link>
+            </div>
+          )}
 
           <button
-            onClick={toggleTheme}
-            className="p-2 duration-300 bg-gray-200 rounded-full dark:bg-gray-700 hover:scale-110"
+            type="button"
+            className="icon-button mobile-menu-toggle"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
           >
-            {theme === "dark" ? (
-              <Sun className="text-yellow-400" size={20} />
-            ) : (
-              <Moon className="text-gray-800" size={20} />
-            )}
+            {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          {!user ? (
-            <>
-              <Link
-                to="/login"
-                className="px-4 py-2 text-indigo-300 transition border border-indigo-300 rounded-lg hover:bg-indigo-600 hover:text-white"
-              >
-                Login
-              </Link>
+        </div>
+      </nav>
 
-              <Link
-                to="/register"
-                className="px-4 py-2 text-white transition bg-indigo-600 rounded-lg hover:bg-indigo-700"
+      {menuOpen && (
+        <div className="mobile-menu">
+          {user ? (
+            <>
+              <SearchInput inputRef={mobileSearchRef} setQuery={setQuery} />
+              <div className="mobile-user">
+                <UserRound size={17} />
+                <span>{user.name}</span>
+              </div>
+              <button
+                type="button"
+                className="button button-quiet"
+                onClick={() => {
+                  setMenuOpen(false);
+                  handleLogout();
+                }}
               >
-                Sign Up
-              </Link>
+                <LogOut size={16} />
+                Sign out
+              </button>
             </>
           ) : (
             <>
-              {/* Username */}
-
-              <div className="flex items-center gap-2 text-gray-700 dark:text-white">
-                <User size={20} />
-
-                <span className="font-semibold">{user.name}</span>
-              </div>
-
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 text-white transition bg-red-500 rounded-lg hover:bg-red-600"
+              <Link
+                className="button button-quiet"
+                to="/login"
+                onClick={() => setMenuOpen(false)}
               >
-                Logout
-              </button>
+                Sign in
+              </Link>
+              <Link
+                className="button button-primary"
+                to="/register"
+                onClick={() => setMenuOpen(false)}
+              >
+                Get started
+              </Link>
             </>
           )}
         </div>
-      </div>
-    </nav>
+      )}
+    </header>
   );
 };
 

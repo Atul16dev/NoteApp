@@ -1,166 +1,157 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { FileText, X } from "lucide-react";
 
 const NoteModal = ({ isOpen, onClose, addNote, currentNote, editNote }) => {
-  const [note, setNote] = useState({
-    title: "",
-    description: "",
-    tag: "",
-  });
-
-  // Input Handler
-  const handleChange = (e) => {
-    setNote({
-      ...note,
-      [e.target.name]: e.target.value,
-    });
-  };
+  const [note, setNote] = useState(() => ({
+    title: currentNote?.title || "",
+    description: currentNote?.description || "",
+    tag: currentNote?.tag || "",
+  }));
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (currentNote) {
-      setNote({
-        title: currentNote.title,
-        description: currentNote.description,
-        tag: currentNote.tag,
-      });
-    }
-  }, [currentNote]);
+    if (!isOpen) return undefined;
 
-  // Reset Form
-  const resetForm = () => {
-    setNote({
-      title: "",
-      description: "",
-      tag: "",
-    });
-  };
-
-  // Cancel Modal
-  const handleCancel = () => {
-    resetForm();
-    onClose();
-  };
-
-  // ESC Key Close
-  useEffect(() => {
-    const closeOnEsc = (e) => {
-      if (e.key === "Escape") {
-        handleCancel();
-      }
-    };
-
-    window.addEventListener("keydown", closeOnEsc);
-
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     return () => {
-      window.removeEventListener("keydown", closeOnEsc);
+      document.body.style.overflow = previousOverflow;
     };
-  }, []);
+  }, [isOpen]);
 
-  // Don't render if modal is closed
   if (!isOpen) return null;
 
-  // Submit
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setNote((current) => ({ ...current, [name]: value }));
+  };
 
-    if (currentNote) {
-      editNote(currentNote._id, note);
-    } else {
-      addNote(note);
-
-      resetForm();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    try {
+      if (currentNote) {
+        await editNote(currentNote._id, note);
+      } else {
+        await addNote(note);
+      }
+    } finally {
+      setSaving(false);
     }
   };
 
   return (
     <div
-      onClick={handleCancel}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="modal-backdrop"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") onClose();
+      }}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="w-[90%] max-w-xl rounded-2xl bg-white p-8 shadow-2xl"
+      <section
+        className="note-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="note-modal-title"
       >
-        <h2 className="mb-8 text-3xl font-bold">
-          {currentNote ? "Edit Note" : "Add New Note"}
-        </h2>
+        <header className="modal-header">
+          <div className="modal-heading">
+            <span className="modal-icon">
+              <FileText size={19} />
+            </span>
+            <div>
+              <h2 id="note-modal-title">
+                {currentNote ? "Edit note" : "Create a note"}
+              </h2>
+              <p>Capture a thought while it’s fresh.</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="icon-button"
+            onClick={onClose}
+            aria-label="Close note editor"
+          >
+            <X size={19} />
+          </button>
+        </header>
 
-        <form onSubmit={handleSubmit}>
-          {/* Title */}
-
-          <div className="mb-5">
-            <label className="font-medium text-gray-700">Title</label>
-
+        <form className="note-form" onSubmit={handleSubmit}>
+          <div className="form-field">
+            <label htmlFor="note-title">Title</label>
             <input
-              type="text"
+              autoFocus
+              id="note-title"
               name="title"
               value={note.title}
               onChange={handleChange}
-              placeholder="Enter title..."
-              className="w-full px-4 py-3 mt-2 border border-gray-300 outline-none rounded-xl focus:ring-2 focus:ring-indigo-400"
+              maxLength={80}
+              minLength={3}
+              required
+              placeholder="Give your note a clear title"
             />
-
-            <p className="mt-1 text-xs text-gray-500">{note.title.length}/50</p>
+            <span className="field-hint">{note.title.length}/80</span>
           </div>
 
-          {/* Description */}
-
-          <div className="mb-5">
-            <label className="font-medium text-gray-700">Description</label>
-
+          <div className="form-field">
+            <label htmlFor="note-description">Your note</label>
             <textarea
-              rows={5}
+              id="note-description"
               name="description"
               value={note.description}
               onChange={handleChange}
-              placeholder="Write your note..."
-              className="w-full px-4 py-3 mt-2 border border-gray-300 outline-none resize-none rounded-xl focus:ring-2 focus:ring-indigo-400"
+              maxLength={2000}
+              required
+              rows={7}
+              placeholder="Start writing..."
             />
-
-            <p className="text-xs text-gray-500">
-              {note.description.length}/500
-            </p>
+            <span className="field-hint">
+              {note.description.length}/2000
+            </span>
           </div>
 
-          {/* Tag */}
-
-          <div className="mb-8">
-            <label className="font-medium text-gray-700">Tag</label>
-
+          <div className="form-field">
+            <label htmlFor="note-tag">Category</label>
             <input
-              type="text"
+              id="note-tag"
               name="tag"
               value={note.tag}
               onChange={handleChange}
-              placeholder="Study, Personal..."
-              className="w-full px-4 py-3 mt-2 border border-gray-300 outline-none rounded-xl focus:ring-2 focus:ring-indigo-400"
+              maxLength={32}
+              placeholder="General"
             />
+            <span className="field-hint">A short label keeps things tidy.</span>
           </div>
 
-          {/* Buttons */}
-
-          <div className="flex justify-end gap-3">
+          <div className="modal-footer">
             <button
               type="button"
-              onClick={handleCancel}
-              className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-100"
+              className="button button-quiet"
+              onClick={onClose}
+              disabled={saving}
             >
               Cancel
             </button>
-
             <button
               type="submit"
-              disabled={note.title.trim().length < 3}
-              className={`rounded-lg px-6 py-2 text-white transition ${
-                note.title.trim().length < 3
-                  ? "cursor-not-allowed bg-gray-400"
-                  : "bg-indigo-600 hover:bg-indigo-700"
-              }`}
+              className="button button-primary"
+              disabled={
+                saving ||
+                note.title.trim().length < 3 ||
+                !note.description.trim()
+              }
             >
-              {currentNote ? "Update Note" : "Add Note"}
+              {saving
+                ? "Saving…"
+                : currentNote
+                  ? "Save changes"
+                  : "Create note"}
             </button>
           </div>
         </form>
-      </div>
+      </section>
     </div>
   );
 };
