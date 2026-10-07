@@ -1490,6 +1490,7 @@ a {
 
   .dashboard-heading {
     align-items: flex-start;
+    flex-wrap: wrap;
   }
 
   .dashboard-heading h1 {
@@ -1497,12 +1498,13 @@ a {
   }
 
   .create-button {
-    min-width: 43px;
-    width: 43px;
-    overflow: hidden;
-    justify-content: flex-start;
-    gap: 15px;
-    padding: 0 12px;
+    flex: 0 0 auto;
+    width: auto;
+    overflow: visible;
+    justify-content: center;
+    gap: 9px;
+    margin-left: auto;
+    padding: 0 14px;
     white-space: nowrap;
   }
 
